@@ -1,0 +1,43 @@
+---
+
+parameters: 
+    - name: webproject
+      type: string
+      default: '**/*.csproj'
+    - name: testproject
+      type: string
+      default: '**/*Tests.csproj'
+    - name: RunTest
+      type: string
+      default: true
+
+      
+
+steps: 
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs: 
+    command: 'build'
+    projects: ${{ parameters.webproject }}
+- task: DotNetCoreCLI@2
+  displayName: Tests
+  inputs: 
+    command: 'test'
+  condition: eq(${{ parameters.RunTest }} , true)
+- task: DotNetCoreCLI@2
+  displayName: publish $(Build.Repository.Name)
+  inputs: 
+    command: 'publish'
+    projects: $(webproject)
+    arguments: '-o $(Build.ArtifactStagingDirectory)/Output'
+    zipAfterPublish: true
+    modifyOutputPath: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/Output'
+    artifactName: $(Build.Repository.Name)
+- task: DotNetCoreCLI@2
+  displayName: restore
+  inputs:
+    command: 'publish'
+    projects: $(webproject)
