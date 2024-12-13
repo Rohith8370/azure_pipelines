@@ -1,0 +1,53 @@
+---
+
+parameters:
+    - name: goal
+      type: string
+      default: package
+      displayName: Buliding maven 
+
+    - name: testResultsFiles
+      type: string
+      default: '**/surefire-reports/TEST-*.xml'
+      displayName: test results files
+
+    - name: specificVersion
+      type: string
+      default: ''
+      displayName: specific version of maven 
+
+    - name: artifactsPath
+      type: string
+      default: '**/*.jar'
+      displayName: Artifacts path
+
+
+steps:
+  - task: Maven@4
+    displayName: 'Bulid'
+    inputs: 
+      goals: ${{ parameters.goal }} 
+      mavenPOMFile: 'pom.xml'
+      publishJUnitResults: true
+      testResultsFiles: ${{ parameters.testResultsFiles }}
+    condition: eq('${{ parameters.specificVersion }}', '')
+
+  - task: Maven@4
+    displayName: 'Bulid'
+    inputs: 
+      goals: ${{ parameters.goal }} 
+      mavenPOMFile: 'pom.xml'
+      publishJUnitResults: true
+      testResultsFiles: ${{ parameters.testResultsFiles }}
+    condition: ne('${{ parameters.specificVersion }}', '')
+
+  - task: CopyFiles@2
+    displayName: copying the files
+    inputs: 
+      contents: ${{ parameters.artifactsPath }} 
+      targetFolder: $(Build.ArtifactStagingDirectory)
+
+  - task: PublishBuildArtifacts@1
+    inputs: 
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: $(Build.Repository.Name)
